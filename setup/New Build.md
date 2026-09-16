@@ -72,4 +72,4 @@ systemctl is-active limelight_canbusprocess robot
 
     - We've built some robot code for you that is an example project for both the Commands v2 and V3 frameworks. You can find the projects in the project_examples folder of this repo. Select the version that corresponds to your hardware. Deploy as normal.
 
-- Optional: a Robot Signal Light, installed on its own ([rsl/README.md](../rsl/README.md)).
+- Optional extras, each installed on its own: a Robot Signal Light ([rsl/README.md](../rsl/README.md)) and the Pi 5 fan ([fan/README.md](../fan/README.md)).

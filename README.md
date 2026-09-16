@@ -57,6 +57,11 @@ Optional. Drives an RSL from a GPIO: solid when disabled, blinking when enabled.
 
 - [RSL Instructions](./rsl/README.md)
 
+#### Pi 5 Fan
+Optional. Forces the Pi 5 fan on and lets you adjust its temperature curve.
+
+- [Fan Instructions](./fan/README.md)
+
 #### SD Card Setup & Cloning
 Instructions for preparing a new SD card or cloning an existing SystemCore installation.
 
