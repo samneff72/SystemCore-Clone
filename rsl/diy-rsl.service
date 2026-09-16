@@ -1,0 +1,14 @@
+[Unit]
+Description=DIY SystemCore Robot Signal Light (GPIO via /sys/class/leds/rsl)
+After=limelight_canbusprocess.service
+Wants=limelight_canbusprocess.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /usr/local/sbin/diy-rsl.py
+Environment=RSL_LED=/sys/class/leds/rsl RSL_ON_MS=250 RSL_OFF_MS=250 RSL_POLL_MS=100
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

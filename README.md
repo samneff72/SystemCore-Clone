@@ -52,6 +52,11 @@ Follow the instructions for configuring the CAN FD HAT.
 
 - [CAN FD HAT Instructions](./fd/README.md)
 
+#### Robot Signal Light
+Optional. Drives an RSL from a GPIO: solid when disabled, blinking when enabled.
+
+- [RSL Instructions](./rsl/README.md)
+
 #### SD Card Setup & Cloning
 Instructions for preparing a new SD card or cloning an existing SystemCore installation.
 
