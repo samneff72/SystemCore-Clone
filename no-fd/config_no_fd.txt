@@ -1,3 +1,5 @@
+# Stock SystemCore config.txt (image 14) with the CAN HAT changes systemcore-can-nofd-setup/install.sh
+# makes: conflicting stock lines commented out ("#diy-can: "), the HAT lines in the diy-can block at the end.
 [all]
 start_file=start4.elf
 fixup_file=fixup4.dat
@@ -17,29 +19,30 @@ disable_splash=1
 #dtoverlay=disable-wifi
 dtoverlay=disable-bt
 dtparam=audio=off
+#diy-can: dtparam=spi=off
 enable_uart=1
 arm_64bit=1
 force_eeprom_read=0
 
 dtparam=ant2
 
-# ---------------------------------------------------------------------------
-# DIY SystemCore: Raspberry Pi 5 + Waveshare "2-CH CAN HAT" (2x MCP2515 on SPI0)
-#
-# The stock image's five MCP2518FD buses (sc-mcp2518-can*-spi* overlays on
-# SPI1/SPI2/SPI3) are REMOVED here: their pins (GPIO 8 = CAN4 INT, GPIO 9 =
-# CAN2 INT, GPIO 24/25 = SPI2/SPI1 chip selects, ...) collide with SPI0.
-#
-# Waveshare 2-CH CAN HAT pinout (wiki table, unmodified board):
-#   CAN_0: CS = GPIO8 (CE0) -> spi0.0   INT_0 = GPIO23 (or 22 if 0R pad moved)
-#   CAN_1: CS = GPIO7 (CE1) -> spi0.1   INT_1 = GPIO25 (or 24 if 0R pad moved)
-#   16 MHz crystal, MCP2515 max SPI clock 10 MHz.
-# The udev rule 71-diy-can-interface-names.rules names spi0.0 -> can_s0 and
-# spi0.1 -> can_s1 (CANBus.systemCore(0) / (1) in robot code).
-# ---------------------------------------------------------------------------
-dtparam=spi=on
-dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=23,spimaxfrequency=10000000
-dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=25,spimaxfrequency=10000000
+
+#pi5weareactuallyusingspi2
+# 2 canbuses on spi2 pi5 / spi3 pi4
+#diy-can: dtoverlay=spi2-2cs-pi5,cs0_pin=0,cs0_spidev=off,cs1_pin=24,cs1_spidev=off
+#diy-can: dtoverlay=sc-mcp2518-can0-spi2,oscillator=40000000,interrupt=22,spimaxfrequency=20000000
+#diy-can: dtoverlay=sc-mcp2518-can1-spi2,oscillator=40000000,interrupt=26,spimaxfrequency=20000000
+
+# BETA SYSTEMCORE: CAN2 on SPI3 (MOSI=6, MISO=5, CLK=7, CS=27, INT=9)
+#diy-can: dtoverlay=spi3-1cs,cs0_pin=27,cs0_spidev=off
+#diy-can: dtoverlay=sc-mcp2518-can2-spi3,oscillator=40000000,interrupt=9,spimaxfrequency=20000000
+
+# 2 canbuses on spi1 pi5 (CAN3 and CAN4 only - CAN2 moved to SPI3 for beta)
+# Use spi1-2cs: CAN3 on spi1.0 (cs0=GPIO25), CAN4 on spi1.1 (cs1=GPIO18)
+#diy-can: dtoverlay=spi1-2cs,cs0_pin=25,cs0_spidev=off,cs1_pin=18,cs1_spidev=off
+#diy-can: dtoverlay=sc-mcp2518-can3-spi1-beta,oscillator=40000000,interrupt=17,spimaxfrequency=20000000
+#diy-can: dtoverlay=sc-mcp2518-can4-spi1-beta,oscillator=40000000,interrupt=8,spimaxfrequency=20000000
+
 
 #working gadget
 dtoverlay=dwc2,dr_mode=peripheral
@@ -48,11 +51,21 @@ dtparam=pciex1_gen3
 camera_auto_detect=0
 display_auto_detect=0
 dtparam=i2s=off
+#dtparam=i2c_arm=on
+#dtparam=i2c0=on
+#dtparam=i2c1=on
+#dtparam=i2c0_baudrate=100000
+#dtoverlay=i2c0,pins_44_45
 dtparam=i2c_csi_dsi0=on
-# The stock image uses "dtoverlay=i2c1,pins_10_11". GPIO 10/11 are SPI0
-# MOSI/SCLK on the 40-pin header, which the CAN HAT needs, and the RP1 SPI and
-# I2C drivers are both modules so whichever probes second loses its pins.
-# Keep i2c1 on its normal header pins (GPIO 2/3) instead.
-dtoverlay=i2c1
+#diy-can: dtoverlay=i2c1,pins_10_11
+
 
 uart_2ndstage=0
+
+# >>> diy-can: managed by systemcore-can-nofd-setup/install.sh >>>
+# Waveshare 2-CH CAN HAT: CAN_0 = spi0.0 (INT GPIO23), CAN_1 = spi0.1 (INT GPIO25)
+dtparam=spi=on
+dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=23,spimaxfrequency=10000000
+dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=25,spimaxfrequency=10000000
+dtoverlay=i2c1
+# <<< diy-can <<<

@@ -1,29 +1,10 @@
 #!/bin/bash
-# DIY SystemCore CAN bring-up for a Raspberry Pi 5 running the official
-# SystemCore image (written against the beta13 / beta14 rootfs) with a Waveshare
-# 2-CH CAN HAT (2x MCP2515 on SPI0).
+# DIY SystemCore CAN bring-up for the Waveshare 2-CH CAN HAT (2x MCP2515 on SPI0), run in place of the
+# stock limelight_canbusprocess.service command via a systemd drop-in.
 #
-# This script REPLACES the ExecStart of the stock limelight_canbusprocess.service
-# (via a systemd drop-in). The stock ExecStart does, for every can_s0..can_s4:
-#     ip link set X down && ip link set X type can bitrate 1000000 fd off &&
-#     ethtool -G X rx 32 tx 8 && ethtool -C X rx-frames-irq 16 rx-usecs-irq 500 &&
-#     ip link set X txqueuelen 1000 && ip link set X up && ... && modprobe robot_heartbeat
-# and only tolerates ethtool exit codes 0/80. The MCP2515 driver (mcp251x) has
-# no ring/coalesce ethtool ops, so `ethtool -G` fails, the && chain stops with
-# can_s0 DOWN, the unit fails, Restart=on-failure fires every 5 s and knocks
-# can_s0 down again forever. (The MCP2518FD driver used by the real SystemCore
-# does implement those ops, which is why the stock unit is fine on real hardware.)
-#
-# For each SystemCore bus can_s0..can_s4:
-#   * if its physical SPI CAN controller exists (spi0.0 -> can_s0, spi0.1 -> can_s1),
-#     make sure it carries that name (udev should already have done it), set
-#     1 Mbit CAN 2.0, best-effort ethtool tuning, txqueuelen 1000, bring it up.
-#   * otherwise create it as a virtual (vcan) dummy so the WPILib HAL can start
-#     (HAL_Initialize aborts unless can_s0..can_s4 AND can_d0..can_d19 exist;
-#     the stock motioncoredaemon creates the can_d* ones itself).
-# Then load robot_heartbeat (needs the CAN interfaces to exist first) and i2c-dev,
-# exactly like the stock unit.
-#
+# For each SystemCore bus can_s0..can_s4: bring the physical controller up at 1 Mbit
+# under that name if it exists, otherwise create a vcan dummy (the WPILib HAL needs all
+# five). Then load robot_heartbeat (needs the interfaces first) and i2c-dev.
 # Force ALL buses virtual (e.g. CANivore-only) by creating /etc/diy-can-virtual-only
 set +e
 
@@ -74,8 +55,7 @@ setup_bus() { # $1 = spi path ("" = none/virtual), $2 = target name
     fi
     ip link set "$2" type can bitrate 1000000 fd off 2>/dev/null \
       || ip link set "$2" type can bitrate 1000000 2>/dev/null
-    # Same tuning the stock unit applies, but best-effort: mcp251x (MCP2515) has
-    # no ring/coalesce support; mcp251xfd (MCP2517/2518FD HATs) does.
+    # same tuning the stock unit applies, best-effort (not supported by mcp251x)
     ethtool -G "$2" rx 32 tx 8 >/dev/null 2>&1
     ethtool -C "$2" rx-frames-irq 16 rx-usecs-irq 500 >/dev/null 2>&1
     ip link set "$2" txqueuelen 1000 2>/dev/null

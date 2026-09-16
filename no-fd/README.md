@@ -15,11 +15,8 @@ A simple project using a Raspberry Pi with a Waveshare CAN Pi HAT.
 
 ## Bobcat SystemCore Image
 
-Preconfigured config.txt and added the service to add the overlay and "direct" can data to the overlay.
-
-> The prebuilt image was made from SystemCore image **12**. For image **13 or newer** don't use
-> it — flash the official image and install the overlay from `systemcore-can-nofd-setup/` instead
-> (see [systemcore-can-nofd-setup/README.md](./systemcore-can-nofd-setup/README.md) and [setup/New Build.md](../setup/New%20Build.md)).
+Preconfigured config.txt and added the the service to add the overlay and "direct" can data to the overlay.
+(Built from SystemCore image 12. For image 13 or newer, install the overlay below onto the official image instead.)
 
 - [OS Image](https://drive.google.com/file/d/1xiq2kDHGF6EOsrRwFeu7dCvdD5uhzyCp/view?usp=drive_link)
 
@@ -28,15 +25,17 @@ Preconfigured config.txt and added the service to add the overlay and "direct" c
 ```text
 .
 ├── no-fd/
-│   ├── config_no_fd.txt                 <- written to both boot slots by install.sh
+│   └── config_no_fd.txt
 │   └── systemcore-can-nofd-setup/
-│       ├── install.sh                       <- run this (sudo) on the Pi
-│       ├── diagnose.sh                      <- run this if something is missing
-│       ├── diy-can-setup.sh                 <- CAN bring-up (replaces the stock unit's command)
-│       ├── diy-can-wait.sh                  <- robot.service pre-start check
-│       ├── 71-diy-can-interface-names.rules <- spi path -> can_s0 / can_s1
-│       ├── dropins/                         <- systemd overrides for limelight_canbusprocess + robot
+│       └── 71-diy-can-interface-names.rules
+│       └── diagnose.sh
+│       └── diy-can-setup.sh
+│       └── diy-can-wait.sh
+│       └── dropins/
+│       └── install.sh
+│       └── uninstall.sh
 │       └── README.md
+│   └── systemcore-can-nofd.img.zip
 └── ...
 ```
 
@@ -51,3 +50,4 @@ Preconfigured config.txt and added the service to add the overlay and "direct" c
 7. open an browser and navigate to either 172.30.0.1 or robot.local
 7. YOUR IN!
 
+For image 13 or newer: flash the official image and follow [systemcore-can-nofd-setup/README.md](./systemcore-can-nofd-setup/README.md).
