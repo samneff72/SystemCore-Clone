@@ -3,27 +3,45 @@ start_file=start4.elf
 fixup_file=fixup4.dat
 over_voltage=2
 
-boot_delay=1
+#disable_touchscreen=1
 kernel=Image
 
 disable_overscan=1
 hdmi_ignore_hotplug=1
 hdmi_ignore_edid=0xa5000080
+#hdmi_edid_file=1
 hdmi_blanking=2
 ignore_lcd=1
-dtoverlay=miniuart-bt
 disable_splash=1
 
-dtoverlay=pi3-disable-bt
+#dtoverlay=disable-wifi
 dtoverlay=disable-bt
 dtparam=audio=off
-dtparam=spi=off
 enable_uart=1
 arm_64bit=1
 force_eeprom_read=0
 
 dtparam=ant2
 
+# ---------------------------------------------------------------------------
+# DIY SystemCore: Raspberry Pi 5 + Waveshare "2-CH CAN FD HAT" (2x MCP2518FD), Mode A
+#
+# The stock image's five MCP2518FD buses (sc-mcp2518-can*-spi* overlays on
+# SPI1/SPI2/SPI3) are REMOVED here: their pins (GPIO 8/9/24/25/17/18 ...) collide
+# with SPI0 and with the HAT's SPI1 chip selects / interrupts.
+#
+# Waveshare 2-CH CAN FD HAT, Mode A (wiki):
+#   CAN_0: SPI0 CE0 -> spi0.0   INT_0 = GPIO25
+#   CAN_1: SPI1 CE0 -> spi1.0   INT_1 = GPIO24     (spi1-3cs puts SPI1 on GPIO 16-21)
+# The udev rule 71-diy-can-interface-names.rules names spi0.0 -> can_s0 and
+# spi1.0 -> can_s1 (CANBus.systemCore(0) / (1) in robot code).
+# ---------------------------------------------------------------------------
+dtparam=spi=on
+dtoverlay=spi1-3cs
+dtoverlay=mcp251xfd,spi0-0,interrupt=25
+dtoverlay=mcp251xfd,spi1-0,interrupt=24
+
+#working gadget
 dtoverlay=dwc2,dr_mode=peripheral
 dtparam=pciex1_gen3
 
@@ -31,9 +49,10 @@ camera_auto_detect=0
 display_auto_detect=0
 dtparam=i2s=off
 dtparam=i2c_csi_dsi0=on
-dtoverlay=i2c1,pins_10_11
+# The stock image uses "dtoverlay=i2c1,pins_10_11". GPIO 10/11 are SPI0
+# MOSI/SCLK on the 40-pin header, which the CAN HAT needs, and the RP1 SPI and
+# I2C drivers are both modules so whichever probes second loses its pins.
+# Keep i2c1 on its normal header pins (GPIO 2/3) instead.
+dtoverlay=i2c1
 
-dtparam=spi=on
-dtoverlay=spi1-3cs
-dtoverlay=mcp251xfd,spi0-0,interrupt=25
-dtoverlay=mcp251xfd,spi1-0,interrupt=24
+uart_2ndstage=0

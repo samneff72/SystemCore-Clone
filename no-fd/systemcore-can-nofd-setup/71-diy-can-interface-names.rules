@@ -1,0 +1,8 @@
+# DIY SystemCore (Raspberry Pi 5 + Waveshare 2-CH CAN HAT).
+# The stock 70-can-interface-names.rules only knows the real SystemCore's SPI
+# paths (spi2.0, spi2.1, spi3.0, spi1.0, spi1.1). Name the HAT's two MCP2515
+# buses the way the WPILib HAL expects them:
+#   HAT CAN_0 (CE0) = spi0.0 -> can_s0   (CANBus.systemCore(0))
+#   HAT CAN_1 (CE1) = spi0.1 -> can_s1   (CANBus.systemCore(1))
+SUBSYSTEM=="net", ACTION=="add", KERNELS=="spi0.0", NAME="can_s0"
+SUBSYSTEM=="net", ACTION=="add", KERNELS=="spi0.1", NAME="can_s1"

@@ -1,22 +1,39 @@
 #!/bin/bash
-# DIY SystemCore CAN bring-up -- works WITH or WITHOUT the Waveshare 2-CH CAN FD HAT.
+# DIY SystemCore CAN bring-up for a Raspberry Pi 5 running the official
+# SystemCore image (written against the beta13 / beta14 rootfs) with a Waveshare
+# 2-CH CAN FD HAT (2x MCP2518FD, Mode A: SPI0 CE0 + SPI1 CE0).
+#
+# This script REPLACES the ExecStart of the stock limelight_canbusprocess.service
+# (via a systemd drop-in). The stock ExecStart does, for every can_s0..can_s4:
+#     ip link set X down && ip link set X type can bitrate 1000000 fd off &&
+#     ethtool -G X rx 32 tx 8 && ethtool -C X rx-frames-irq 16 rx-usecs-irq 500 &&
+#     ip link set X txqueuelen 1000 && ip link set X up && ... && modprobe robot_heartbeat
+# That works for this HAT's two MCP2518FD buses, but `ip link set can_s2 type can`
+# then fails on the vcan dummy can_s2, the && chain stops, the unit fails, and
+# Restart=on-failure re-runs it every 5 s -- bouncing can_s0/can_s1 down and up
+# every 5 s forever (devices keep dropping off the bus).
 #
 # For each SystemCore bus can_s0..can_s4:
-#   * if its physical SPI CAN controller is present (and not forced virtual), name it by
-#     stable SPI path, set 1 Mbit, bring it up.   spi0.0 -> can_s0, spi1.0 -> can_s1.
-#   * otherwise create it as a virtual (vcan) dummy, so the WPILib HAL can initialize
-#     (it aborts unless all of can_s0..can_s4 exist).
+#   * if its physical SPI CAN controller exists (spi0.0 -> can_s0, spi0.1 -> can_s1),
+#     make sure it carries that name (udev should already have done it), set
+#     1 Mbit CAN 2.0, best-effort ethtool tuning, txqueuelen 1000, bring it up.
+#   * otherwise create it as a virtual (vcan) dummy so the WPILib HAL can start
+#     (HAL_Initialize aborts unless can_s0..can_s4 AND can_d0..can_d19 exist;
+#     the stock motioncoredaemon creates the can_d* ones itself).
+# Then load robot_heartbeat (needs the CAN interfaces to exist first) and i2c-dev,
+# exactly like the stock unit.
 #
-# So with NO HAT, all of can_s0..4 become virtual and you drive devices over the
-# CANivore:  new CANBus("reefmaster").  (The CANivore is can2 / USB and is independent
-# of these buses.)
-#
-# Force ALL buses virtual even when the HAT is fitted (e.g. CANivore-only) by creating:
-#     sudo touch /etc/diy-can-virtual-only
+# Force ALL buses virtual (e.g. CANivore-only) by creating /etc/diy-can-virtual-only
 set +e
+
+# Linux SPI device behind each physical SystemCore bus (see config_*.txt + udev rule)
+BUS0_SPI=spi0.0   # HAT CAN_0 -> can_s0
+BUS1_SPI=spi1.0   # HAT CAN_1 -> can_s1 (stock udev rule would call it can_s3; ours wins)
 
 FORCE_VIRTUAL=0
 [ -e /etc/diy-can-virtual-only ] && FORCE_VIRTUAL=1
+
+log() { echo "diy-can: $*"; }
 
 ifname_for() { # $1 = spi path (e.g. spi0.0); prints the netdev bound to it, else empty
   local d
@@ -33,7 +50,7 @@ ifname_for() { # $1 = spi path (e.g. spi0.0); prints the netdev bound to it, els
 make_vcan() { # $1 = name
   if ! ip link show "$1" >/dev/null 2>&1; then
     ip link add "$1" type vcan 2>/dev/null
-    ip link set "$1" mtu 72 2>/dev/null
+    ip link set "$1" mtu 16 2>/dev/null   # CAN 2.0 MTU, same as motioncoredaemon's can_d* vcans
   fi
   ip link set "$1" up 2>/dev/null
 }
@@ -46,41 +63,55 @@ setup_bus() { # $1 = spi path ("" = none/virtual), $2 = target name
   if [ -n "$cur" ]; then
     ip link set "$cur" down 2>/dev/null
     if [ "$cur" != "$2" ]; then
+      # udev rule missing or raced; rename ourselves
+      if ip link show "$2" >/dev/null 2>&1; then
+        log "WARNING: $2 already exists (type $(ip -d link show "$2" | awk 'NR==3{print $1}')) - deleting it to make room for $cur ($1)"
+        ip link set "$2" down 2>/dev/null
+        ip link delete "$2" 2>/dev/null
+      fi
       ip link set "$cur" name "$2" 2>/dev/null
     fi
-    ip link set "$2" type can bitrate 1000000 2>/dev/null
+    ip link set "$2" type can bitrate 1000000 fd off 2>/dev/null \
+      || ip link set "$2" type can bitrate 1000000 2>/dev/null
+    # Same tuning the stock unit applies, but best-effort: mcp251x (MCP2515) has
+    # no ring/coalesce support; mcp251xfd (MCP2517/2518FD HATs) does.
+    ethtool -G "$2" rx 32 tx 8 >/dev/null 2>&1
+    ethtool -C "$2" rx-frames-irq 16 rx-usecs-irq 500 >/dev/null 2>&1
     ip link set "$2" txqueuelen 1000 2>/dev/null
     ip link set "$2" up 2>/dev/null
-    echo "diy-can: $2 = PHYSICAL ($cur on $1) @ 1Mbps"
+    log "$2 = PHYSICAL ($cur on $1) @ 1 Mbit, state $(cat /sys/class/net/$2/operstate 2>/dev/null)"
   else
     make_vcan "$2"
-    echo "diy-can: $2 = VIRTUAL (vcan dummy)"
+    log "$2 = VIRTUAL (vcan dummy)"
   fi
 }
 
 modprobe vcan 2>/dev/null
 
-# If not forcing virtual, give the CAN FD SPI controllers up to ~12s to probe (only
-# matters if the HAT is fitted; if absent, the loop just times out and we go virtual).
+# Give the CAN controllers up to ~12 s to probe (the RP1 SPI controllers and the
+# CAN driver are initialised asynchronously). With no HAT this just times out
+# -> all virtual.
 if [ "$FORCE_VIRTUAL" = "0" ]; then
-  for i in $(seq 1 12); do
-    [ -n "$(ifname_for spi0.0)$(ifname_for spi1.0)" ] && break
-    sleep 1
+  for i in $(seq 1 24); do
+    [ -n "$(ifname_for $BUS0_SPI)" ] && [ -n "$(ifname_for $BUS1_SPI)" ] && break
+    sleep 0.5
   done
 fi
 
-setup_bus spi0.0 can_s0   # CAN_0 on the Waveshare HAT
-setup_bus spi1.0 can_s1   # CAN_1 on the Waveshare HAT (Mode A)
-setup_bus ""      can_s2   # no physical controller on this board -> virtual
-setup_bus ""      can_s3
-setup_bus ""      can_s4
+setup_bus $BUS0_SPI can_s0   # HAT CAN_0
+setup_bus $BUS1_SPI can_s1   # HAT CAN_1
+setup_bus ""        can_s2   # no physical controller on this board -> virtual
+setup_bus ""        can_s3
+setup_bus ""        can_s4
 
-# robot_heartbeat depends on can_sender; modprobe pulls it. Needs CAN ifaces to exist
-# (real or vcan both satisfy it).
+# robot_heartbeat depends on can_sender (modprobe pulls it in). It needs the
+# CAN interfaces to exist first (real or vcan both satisfy it) and creates the
+# /dev/mrccan/* enable interface that MrcCommDaemon and the HAL use.
 if modprobe robot_heartbeat; then
-  echo "diy-can: robot_heartbeat loaded"
+  log "robot_heartbeat loaded ($(ls /dev/mrccan 2>/dev/null | tr '\n' ' '))"
 else
-  echo "diy-can: WARNING robot_heartbeat failed to load"
+  log "WARNING robot_heartbeat failed to load"
 fi
+modprobe i2c-dev 2>/dev/null
 
 exit 0

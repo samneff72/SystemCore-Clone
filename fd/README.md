@@ -15,7 +15,11 @@ A simple project using a Raspberry Pi with a Waveshare CAN Pi HAT.
 
 ## Bobcat SystemCore Image
 
-Preconfigured config.txt and added the the service to add the overlay and "direct" can data to the overlay.
+Preconfigured config.txt and added the service to add the overlay and "direct" can data to the overlay.
+
+> The prebuilt image was made from SystemCore image **12**. For image **13 or newer** don't use
+> it — flash the official image and install the overlay from `systemcore-can-fd-setup/` instead
+> (see [systemcore-can-fd-setup/README.md](./systemcore-can-fd-setup/README.md) and [setup/New Build.md](../setup/New%20Build.md)).
 
 - [OS Image](https://drive.google.com/file/d/1z9JZ31z3y5s7CDYZU3TlXk1nzEgXCvyU/view?usp=drive_link)
 
@@ -23,11 +27,15 @@ Preconfigured config.txt and added the the service to add the overlay and "direc
 
 ```text
 .
-├── no-fd/
+├── fd/
+│   ├── config_with_fd.txt                 <- written to both boot slots by install.sh
 │   └── systemcore-can-fd-setup/
-│       └── can-bringup.servce
-│       └── diy-can-setup.sh
-│       └── install.sh
+│       ├── install.sh                       <- run this (sudo) on the Pi
+│       ├── diagnose.sh                      <- run this if something is missing
+│       ├── diy-can-setup.sh                 <- CAN bring-up (replaces the stock unit's command)
+│       ├── diy-can-wait.sh                  <- robot.service pre-start check
+│       ├── 71-diy-can-interface-names.rules <- spi path -> can_s0 / can_s1
+│       ├── dropins/                         <- systemd overrides for limelight_canbusprocess + robot
 │       └── README.md
 └── ...
 ```
