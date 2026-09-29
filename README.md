@@ -16,7 +16,7 @@ Match WPILib to the SystemCore image (see [wpilibsuite/SystemcoreTesting](https:
 - image 14: [2027.0.0-alpha-7](https://github.com/wpilibsuite/allwpilib/releases/tag/v2027.0.0-alpha-7) (no Phoenix 6 release for it yet)
 
 ### SystemCore Base Image
-This is the base os image used if you are preperaing or setting up your own image instead of using Bobcat's Prebuilt image. The overlays in this repo need image **13 or newer**.
+This is the base os image the setup guides start from — grab the beta asset, image **13 or newer**. (Bobcat's prebuilt images are image 12 and predate these overlays.)
 - https://github.com/LimelightVision/systemcore-os-public/releases
 
 ### Canivore usb drivers

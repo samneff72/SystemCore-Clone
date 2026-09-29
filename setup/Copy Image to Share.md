@@ -1,10 +1,19 @@
 # Setup Images
 A simple guide to duplicating an prebuilt sd card to an .img file for either CAN or CAN FD
 
+> A full card image contains the proprietary FIRST/CTRE parts of the Systemcore OS
+> (`robot_heartbeat.ko`, `MrcCommDaemon`, the Phoenix native libraries, the HAL), so keep
+> images you make this way for your own backups rather than redistributing them.
+
 ## Prepare & Copy the SD Card to an Full Size Image
-Insert the SD Card into your computer
-sudo dd bs=4M if=/dev/disk4 of=bobcats-systemcore-{fd or nofd}-fullsize.img
-( replace the {fd or nofd} with either option that corresponds to the version you are making )
+
+Insert the SD Card into your computer and find its device name first — `diskutil list` on
+macOS, `lsblk` on Linux. `dd` overwrites whatever you point it at, so check before you run it.
+
+```
+sudo dd bs=4M if=/dev/disk4 of=bobcats-systemcore-{fd or nofd}.img
+```
+( replace `/dev/disk4` with your card's device, and the {fd or nofd} with either option that corresponds to the version you are making )
 
 ## Shrink the Image
 Execute the docker command to download and make an docker image to run the commands on:
