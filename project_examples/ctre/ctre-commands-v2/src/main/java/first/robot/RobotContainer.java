@@ -7,13 +7,12 @@ package first.robot;
 import org.wpilib.command2.button.GamepadButton;
 import org.wpilib.driverstation.Gamepad;
 import org.wpilib.driverstation.Gamepad.Button;
-import org.wpilib.networktables.TimestampedDouble;
 
 import first.robot.commands.Autos;
 import first.robot.subsystems.TestSubsystem;
 
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 import org.wpilib.command2.*;
 
@@ -36,7 +35,7 @@ public class RobotContainer {
   private final Command simpleCounterClockwiseAuto = Autos.simpleCounterClockwiseAuto(testSubsystem);
 
   // A chooser for autonomous commands
-  SendableChooser<Command> chooser = new SendableChooser<>();
+  Selectable<Command> chooser = new Selectable<>();
 
   Gamepad controller = new Gamepad(0);
 
@@ -50,11 +49,11 @@ public class RobotContainer {
       testSubsystem.setDefaultCommand(testSubsystem.stopMotors());
 
       // Add commands to the autonomous command chooser
-      chooser.setDefaultOption("Clockwise", simpleClockwiseAuto);
-      chooser.addOption("CounterClockwise", simpleCounterClockwiseAuto);
+      chooser.addDefault("Clockwise", simpleClockwiseAuto);
+      chooser.add("CounterClockwise", simpleCounterClockwiseAuto);
 
       // Put the chooser on the dashboard
-      SmartDashboard.putData("Autonomous", chooser);
+      Tunables.publish("Autonomous", chooser);
   }
 
   /**

@@ -7,16 +7,17 @@ package first.robot.subsystems;
 import org.wpilib.command3.*;
 
 import com.ctre.phoenix6.CANBus;
+import org.wpilib.hardware.bus.CANPort;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
-public class TestSubsystem  extends Mechanism {
+public class TestSubsystem implements Mechanism {
 
   // setup an motor 
-  private final TalonFX motor = new TalonFX(33, CANBus.systemcore(1)); // uses can_S1
+  private final TalonFX motor = new TalonFX(33, new CANBus(CANPort.CAN_S1)); // uses can_s1
   private final TalonFX motorOnCanivoreBus = new TalonFX(33, new CANBus("CANivore")); // uses theCANivore
   private DutyCycleOut request = new DutyCycleOut(0).withEnableFOC(false);
   private final double CLOCKWISE = 0.3;
@@ -51,7 +52,7 @@ public class TestSubsystem  extends Mechanism {
     return this.run(coro -> {
       motor.setControl(request.withOutput(COUNTERCLOCKWISE));
       motorOnCanivoreBus.setControl(request.withOutput(COUNTERCLOCKWISE));
-    }).named("MotorsSpinClockwise");
+    }).named("MotorsSpinCounterClockwise");
   }
 
   public Command stopMotors(){

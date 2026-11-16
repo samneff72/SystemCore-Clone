@@ -11,8 +11,8 @@ import org.wpilib.driverstation.Gamepad;
 import first.robot.commands.Autos;
 import first.robot.subsystems.TestSubsystem;
 
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -33,7 +33,7 @@ public class RobotContainer {
   private final Command simpleCounterClockwiseAuto = Autos.simpleCounterClockwiseAuto(testSubsystem);
 
   // A chooser for autonomous commands
-  SendableChooser<Command> chooser = new SendableChooser<>();
+  Selectable<Command> chooser = new Selectable<>();
 
   CommandGamepad controller = new CommandGamepad(0);
 
@@ -55,11 +55,11 @@ public class RobotContainer {
                       .named("Motors Idle"));
 
       // Add commands to the autonomous command chooser
-      chooser.setDefaultOption("Clockwise", simpleClockwiseAuto);
-      chooser.addOption("CounterClockwise", simpleCounterClockwiseAuto);
+      chooser.addDefault("Clockwise", simpleClockwiseAuto);
+      chooser.add("CounterClockwise", simpleCounterClockwiseAuto);
 
       // Put the chooser on the dashboard
-      SmartDashboard.putData("Autonomous", chooser);
+      Tunables.publish("Autonomous", chooser);
   }
 
   /**
@@ -72,15 +72,15 @@ public class RobotContainer {
     controller
         .rightBumper()
         .onTrue(
-            Command.noRequirements(coro -> testSubsystem.runClockwise()).named("Run Clockwise"))
+            testSubsystem.runClockwise())
         .onFalse(
-            Command.noRequirements(coro ->testSubsystem.stopMotors()).named("Stop Motors"));
+            testSubsystem.stopMotors());
     controller
         .leftBumper()
         .onTrue(
-            Command.noRequirements(coro -> testSubsystem.runClockwise()).named("Run Clockwise"))
+            testSubsystem.runClockwise())
         .onFalse(
-            Command.noRequirements(coro ->testSubsystem.stopMotors()).named("Stop Motors"));
+            testSubsystem.stopMotors());
   }
 
   /**
