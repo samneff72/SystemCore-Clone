@@ -12,8 +12,8 @@ On every boot, a oneshot service (`can-bringup.service` → `diy-can-setup.sh`):
 
 1. Detects the two MCP2515 SPI CAN controllers and names them by **stable SPI path**
    (probe-order independent), sets **1 Mbit**, and brings them up:
-   - `spi0.1` → `can_s0`  (addressed in code as `new CANBus(CANPort.CAN_S0)`)
-   - `spi0.0` → `can_s1`  (`new CANBus(CANPort.CAN_S1)`)
+   - `spi0.0` → `can_s0`  (addressed in code as `new CANBus(CANPort.CAN_S0)`)
+   - `spi0.1` → `can_s1`  (`new CANBus(CANPort.CAN_S1)`)
 2. Creates `can_s2`/`can_s3`/`can_s4` as **virtual (vcan)** dummies — the WPILib HAL aborts
    at startup unless all of `can_s0`–`can_s4` exist.
 3. Loads the `robot_heartbeat` kernel module **after** the CAN interfaces exist (it fails

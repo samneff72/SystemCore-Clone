@@ -1,4 +1,10 @@
 # Setup Images
+
+> [!WARNING]
+> **DEPRECATED — we no longer build or share prebuilt SD-card images.** Every clone is
+> built from the official SystemCore base image using the [New Build Guide](./New%20Build.md).
+> This page is kept for reference only (e.g. making a personal backup of your own card).
+
 A simple guide to duplicating an prebuilt sd card to an .img file for either CAN or CAN FD
 
 ## Prepare & Copy the SD Card to an Full Size Image

@@ -1,3 +1,4 @@
+# DEPRECATED: CAN FD support is not maintained. See fd/README.md.
 [all]
 start_file=start4.elf
 fixup_file=fixup4.dat

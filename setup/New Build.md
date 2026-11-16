@@ -14,88 +14,55 @@ through the process of building and setting up your own Systemcore clone so you 
 developing and testing earlier.
 
 ## Assumptions
-- You will be expected to know how to copy / "burn" an image to an sd card using either balena etcher or raspberry pi. The instructions to do that are not in the scope of this guide. Burn the default "base" image on the main readme. 
-- You will be expected to know how to push files from your local device using SCP to the remote pi.
-
+- You know how to flash ("burn") an image to an SD card with Raspberry Pi Imager or balenaEtcher. That isn't covered here. Flash the **SystemCore OS release 17** base image (see the version table in the main [README](../README.md)).
+- You know how to copy files from your computer to the Pi with `scp`.
+- You are using the **no-FD CAN HAT**. The CAN FD HAT path is deprecated.
 
 ## Step By Step Instructions
 
-- Put the card in your raspberry pi once its been burned
+- Put the flashed card in the Raspberry Pi and power it on.
 
-- Connect to the wireless network "SYSTEMCORE" using the password "PASSWORD" (upper case sensitive)
+- Connect to the Pi.
+    - **OS 17 and later:** the Wi-Fi network is `SYSTEMCORE-<suffix>` and the password is unique per unit. (`PASSWORD` is no longer accepted.) Real SystemCore hardware shows the password on its built-in display, which the Pi doesn't have, so connect another way first:
+        - **Ethernet:** plug the Pi into your network and browse to `http://robot.local`.
+        - **USB-C:** connect the Pi's USB-C port to your computer and browse to `172.26.0.1` (Windows) or `172.27.0.1` (macOS/Linux).
+    - Read the Wi-Fi name and password in the web UI, and change them if you like.
+    - Not yet verified on a Pi: how OS 17 derives the per-unit suffix on non-SystemCore hardware. If Wi-Fi doesn't come up, use Ethernet or USB-C.
 
-- from the main dashboard click on the "terminal" app
+- Copy the setup folder from this repo to the Pi's home directory:
+```
+scp -r no-fd/systemcore-can-nofd-setup systemcore@<pi-address>:/home/systemcore/
+```
 
-- Create the mount point for the hidden partition
+- Run the installer and reboot. From the web dashboard's "terminal" app, or over `ssh systemcore@<pi-address>`:
 ```
-sudo mkdir -p /mnt/hardware_boot
-```
-- Mount the partition
-```
-sudo mount /dev/mmcblk0p2 /mnt/hardware_boot
-```
-- Edit the config.txt
-    - Open the file using the following command
-    ```
-    sudo nano /mnt/hardware_boot/config.txt
-    ```
-    - Remove the full contents of the file 
-    - Copy and paste the full contents to this config.txt file and save ( use the corresponding contents of  config_with_fd.txt or config_with_nofd.txt )
-    - Save and close out of the file by using the following key Sequence 
-    ```
-    Ctrl + O
-    Enter
-    Ctrl + X
-    ```
-    - Unmount the partition and reboot the device
-    ```
-    sudo umount /mnt/hardware_boot
-    sudo reboot
-    ```
-- Copy the contents from fd/systemcore-can-fd-setup or no-fd/systemcore-can-nofd-setup to the home directory of the pi from your local device using command line.
-```
-For FD:
-scp -r systemcore-can-fd-setup systemcore@<pi-address>:/home/systemcore/
-
-For NO FD:
-scp -r systemcore-can-nofd-setup systemcore@<pi-address>:/home/systemcore/
-
-```
-- Execute the installer in the command by entering the folder directory
-```
-Use one of the below commands corresponding to your CAN Board
-cd ~/systemcore-can-fd-setup 
-or 
-cd ~/systemcore-can-nofd-setup 
-
+cd ~/systemcore-can-nofd-setup
 sudo ./install.sh
 sudo reboot
 ```
+`install.sh` installs the CAN bring-up service and adds the CAN HAT overlay lines to the image's own `config.txt` (in a marked block, with a dated backup). You no longer need to edit `config.txt` by hand.
+If it can't find the boot partition, list partitions with `lsblk -f` and run `sudo ./configure-boot.sh /dev/<partition>`, then reboot.
 
-- Install the canivore drivers by installing the .ipk as an app in the 4th tile option on the main dashboard.
-    - Reconnect to the systemcore network if necessary
-    - Select add packages in the web dashboard ( it is unclear which of the follow steps needs to be done first)
-    - Drag and drop the first canivore-usb-kernel_1.18_aarch64.ipk file to install
-    - Drag and drop the second canivore-usb_1.16_aarch64.ipk file to install
-    - reboot
+- **After any OS reflash or OTA update, run `sudo ./install.sh` again and reboot.** Updates can overwrite `config.txt` and the installed service.
 
-- Verify all is running fine as expected
+- Install the CANivore package (only if you use a CANivore):
+    - Download `canivore-usb_1.18_systemcoreos_alphabeta_17.ipk` (link in the main README). On OS 15 and later this one IPK replaces the old kernel + userspace pair.
+    - In the web dashboard, open **Add Package** and drag the `.ipk` in.
+    - Reboot.
+
+- Verify everything is running:
 ```
-From terminal execute the following command to validate the bus is good and all channels are as expected . We expect only the first 2 channels to be listed as physical and all others to be virtual.
-
-ip -br link show | grep can_s
-
-From the terminal execute the following command to validate that the can bringup service is online and active 
-
-systemctl is-active can-bringup robot
+ip -br link show | grep can_s           # can_s0/can_s1 physical and UP; can_s2-4 virtual
+ip -br link show | grep -c 'can_[sd]'   # expect 25: the WPILib HAL opens can_s0-4 and can_d0-19
+ls /dev/mrccan/                         # enable interface from robot_heartbeat
+systemctl is-active can-bringup robot   # both "active"
 ```
-- Update necessary firmware on the motor
-    - CTRE
-        - Open pheonix tuner application
-        - Connect to the robot using dashboard or ip address
-        - Update the firmeware to the latest 2026 Phoenix version ( I know this is confusing as we are supposed to be on 2027 ).
 
-- Deploy robot code
+- Update motor firmware (CTRE):
+    - Open **Phoenix Tuner X Preview** (the stable Tuner X doesn't support the 2027 alpha).
+    - Connect to the robot by dashboard or IP address.
+    - Flash firmware **26.70.x** to match the Phoenix 6 `26.70.0-alpha-2` vendordep. Mismatched firmware gives "API too old / CAN frame too stale" errors.
 
-    - We've built some robot code for you that is an example project for both the Commands v2 and V3 frameworks. You can find the projects in the project_examples folder of this repo. Select the version that corresponds to your hardware. Deploy as normal.
-
+- Deploy robot code.
+    - Example projects for Commands v2 and v3 are in [`project_examples/ctre`](../project_examples/ctre). They target WPILib 2027 alpha-8 and Phoenix 6 `26.70.0-alpha-2`. Open one in **2027_alpha8 WPILib VS Code**, set your team number, and deploy as normal.
+    - Systemcore CAN buses are addressed as `new CANBus(CANPort.CAN_S0)` / `CAN_S1`. The old `CANBus.systemcore(n)` call was removed.

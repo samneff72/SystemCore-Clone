@@ -1,3 +1,5 @@
+# Reference only: install.sh (configure-boot.sh) now appends just the CAN lines to the image's stock config.txt.
+# Do not paste this whole file over a newer image's config.txt.
 [all]
 start_file=start4.elf
 fixup_file=fixup4.dat

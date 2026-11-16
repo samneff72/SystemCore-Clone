@@ -1,4 +1,5 @@
 #!/bin/bash
+# DEPRECATED: CAN FD support is not maintained or validated. Use no-fd/ instead.
 # DIY SystemCore CAN bring-up -- works WITH or WITHOUT the Waveshare 2-CH CAN FD HAT.
 #
 # For each SystemCore bus can_s0..can_s4:

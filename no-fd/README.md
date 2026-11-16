@@ -1,5 +1,12 @@
 # SystemCore-Clone
 
+> [!WARNING]
+> **DEPRECATED — prebuilt images are no longer provided or supported.** The images linked
+> here were built on a SystemCore OS release older than 14 and do not work with WPILib
+> 2027 alpha-7 or later. Build from the official base image instead:
+> see the [New Build Guide](../setup/New%20Build.md).
+
+
 A simple project using a Raspberry Pi with a Waveshare CAN Pi HAT.
 
 ## Hardware

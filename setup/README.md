@@ -5,5 +5,5 @@ A simple guide to either setup a new sd card from base image or copy an sd card 
 - [New Build Guide](./New%20Build.md)
 
 
-## Sharing the SD Image Card Guide
- - [Guide](./Copy%20Image%20to%20Share.md)
+## Sharing the SD Image Card Guide (deprecated)
+ - [Guide](./Copy%20Image%20to%20Share.md) — prebuilt images are no longer provided; kept for reference only.

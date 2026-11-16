@@ -1,5 +1,19 @@
 # SystemCore-Clone
 
+> [!WARNING]
+> **DEPRECATED — CAN FD support is not maintained.** This CAN FD HAT setup was never
+> validated on hardware and has not been updated for current SystemCore OS / WPILib /
+> Phoenix 6 releases (see the version table in the top-level README). It is kept for
+> reference only. Use the [no-FD CAN HAT setup](./no-fd/systemcore-can-nofd-setup/README.md)
+> instead; FD support will be revisited once an FD board is available for testing.
+
+> [!WARNING]
+> **DEPRECATED — prebuilt images are no longer provided or supported.** The images linked
+> here were built on a SystemCore OS release older than 14 and do not work with WPILib
+> 2027 alpha-7 or later. Build from the official base image instead:
+> see the [New Build Guide](./setup/New%20Build.md).
+
+
 A simple project using a Raspberry Pi with a Waveshare CAN Pi HAT.
 
 ## Hardware

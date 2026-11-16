@@ -1,4 +1,5 @@
 #!/bin/bash
+# DEPRECATED: CAN FD support is not maintained or validated. Use no-fd/ instead.
 # Install the DIY SystemCore CAN bring-up onto a SystemCore-base image.
 # Idempotent: safe to re-run. Run as root (sudo).
 set -e
@@ -28,14 +29,6 @@ echo "==> Enabling can-bringup.service"
 systemctl daemon-reload
 systemctl enable can-bringup.service
 
-# Add the HAT's device-tree overlays to the stock config.txt (appends a managed block
-# rather than replacing the file, so settings from newer OS releases are kept).
-# Skip with SKIP_BOOT_CONFIG=1 if you manage config.txt yourself.
-if [ "${SKIP_BOOT_CONFIG:-0}" != "1" ]; then
-  echo "==> Configuring CAN overlays in config.txt"
-  "$DIR/configure-boot.sh"
-fi
-
 echo
-echo "Done. Reboot to load the CAN overlays and start the bring-up service:  sudo reboot"
-echo "Verify after reboot with:   ls /dev/mrccan/ ; ip -br link show | grep can_"
+echo "Done. Apply now with:   sudo systemctl restart can-bringup && sudo systemctl restart robot"
+echo "...or just reboot. Verify with:   ls /dev/mrccan/ ; ip -br link show | grep can_s"
