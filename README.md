@@ -6,6 +6,12 @@ with a **CAN HAT** so robot code can drive CTRE Phoenix 6 devices.
 Every clone is built from the official SystemCore base image plus the setup scripts in this
 repo. We do **not** distribute prebuilt SD-card images.
 
+> [!TIP]
+> **Inspired by the Bobcat Robotics SystemCore Clone.** This project builds on
+> [BobcatRobotics/SystemCore-Clone](https://github.com/BobcatRobotics/SystemCore-Clone).
+> Their original work on running SystemCore OS on a Raspberry Pi with a CAN HAT is the
+> foundation of everything here. Thank you, Bobcats!
+
 > [!NOTE]
 > **Supported hardware:** the standard (no-FD) MCP2515 CAN HAT only.
 > The CAN FD HAT setup in [`fd/`](./fd/README.md) is **deprecated** and unmaintained
