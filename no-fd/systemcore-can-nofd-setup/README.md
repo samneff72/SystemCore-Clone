@@ -1,5 +1,12 @@
 # DIY SystemCore CAN setup
 
+> [!CAUTION]
+> **NOT YET TESTED ON HARDWARE.** The version alignment below (Phoenix 6 `26.70.0-alpha-2`,
+> WPILib 2027 alpha-8, SystemCore OS 17) and the updated setup flow were researched from
+> upstream release notes and source code. They have not been verified on a physical build yet.
+> The example projects have not been compiled. Report what works and what doesn't before
+> treating this as a release.
+
 Turns an **official FIRST SystemCore image** running on a Raspberry Pi 5 into a working
 DIY substitute that drives CTRE Phoenix 6 devices over **on-board MCP2515 CAN pins**
 and/or a **CANivore** — with everything coming up automatically at boot.

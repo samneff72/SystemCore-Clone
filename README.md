@@ -1,5 +1,12 @@
 # SystemCore Clone
 
+> [!CAUTION]
+> **NOT YET TESTED ON HARDWARE.** The version alignment below (Phoenix 6 `26.70.0-alpha-2`,
+> WPILib 2027 alpha-8, SystemCore OS 17) and the updated setup flow were researched from
+> upstream release notes and source code. They have not been verified on a physical build yet.
+> The example projects have not been compiled. Report what works and what doesn't before
+> treating this as a release.
+
 A Raspberry Pi 5–based stand-in for a FIRST SystemCore, running the official SystemCore OS
 with a **CAN HAT** so robot code can drive CTRE Phoenix 6 devices.
 
