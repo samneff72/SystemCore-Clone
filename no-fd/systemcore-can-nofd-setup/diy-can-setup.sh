@@ -3,7 +3,7 @@
 #
 # For each SystemCore bus can_s0..can_s4:
 #   * if its physical SPI CAN controller is present (and not forced virtual), name it by
-#     stable SPI path, set 1 Mbit, bring it up.   spi0.1 -> can_s0, spi0.0 -> can_s1.
+#     stable SPI path, set 1 Mbit, bring it up.   spi0.0 -> can_s0, spi0.1 -> can_s1.
 #   * otherwise create it as a virtual (vcan) dummy, so the WPILib HAL can initialize
 #     (it aborts unless all of can_s0..can_s4 exist).
 #
@@ -18,7 +18,7 @@ set +e
 FORCE_VIRTUAL=0
 [ -e /etc/diy-can-virtual-only ] && FORCE_VIRTUAL=1
 
-ifname_for() { # $1 = spi path (e.g. spi0.1); prints the netdev bound to it, else empty
+ifname_for() { # $1 = spi path (e.g. spi0.0); prints the netdev bound to it, else empty
   local d
   for d in /sys/class/net/*/device; do
     [ -e "$d" ] || continue
@@ -62,9 +62,11 @@ modprobe vcan 2>/dev/null
 
 # If not forcing virtual, give the MCP2515 SPI controllers up to ~12s to probe (only
 # matters if a pin board is fitted; if absent, the loop just times out and we go virtual).
+# Wait for BOTH controllers: if we stopped at the first one, a late-probing spi0.0 would
+# leave can_s0 as a silent vcan placeholder.
 if [ "$FORCE_VIRTUAL" = "0" ]; then
   for i in $(seq 1 12); do
-    [ -n "$(ifname_for spi0.1)$(ifname_for spi0.0)" ] && break
+    [ -n "$(ifname_for spi0.0)" ] && [ -n "$(ifname_for spi0.1)" ] && break
     sleep 1
   done
 fi
